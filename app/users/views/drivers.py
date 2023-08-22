@@ -94,7 +94,7 @@ class ProDriverProfileView(CreateView):
     template_name = 'account/signup_form.html'
 
     def get_context_data(self, **kwargs):
-        kwargs['user_type'] = 'Commercial Driver'
+        kwargs['user_type'] = 'Commercial/Logistic Drivers'
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
