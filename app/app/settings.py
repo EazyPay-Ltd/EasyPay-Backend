@@ -11,6 +11,12 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from django.core.management.utils import get_random_secret_key
+from urllib.parse import urlparse
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,13 +26,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'kvd@k%=x78+9xx844div$%t4@9c4_58(i1yha(u8dt2nll*bq('
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
+#DEBUG = "True"
 
-ALLOWED_HOSTS = []
-
+#ALLOWED_HOSTS = ['easy-pay-backend-f9jyg.ondigitalocean.app', '127.0.0.1']
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS",
+                          "127.0.0.1, localhost").split(",")
 
 # Application definition
 
@@ -37,24 +45,92 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    'wagtail.contrib.forms',
+    'wagtail.contrib.redirects',
+    'wagtail.embeds',
+    'wagtail.sites',
+    'wagtail.users',
+    'wagtail.snippets',
+    'wagtail.documents',
+    'wagtail.images',
+    'wagtail.search',
+    'wagtail.admin',
+    'wagtail',
+    'wagtail.contrib.modeladmin',
+    'wagtail.contrib.settings',
+    'wagtail.api.v2',
+    'taggit',
+    'modelcluster',
+
+
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_auth',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.instagram',
+    'allauth.socialaccount.providers.twitter',
+    'allauth.socialaccount.providers.linkedin_oauth2',
+    'django_forms_bootstrap',
+    'rest_auth.registration',
+    'corsheaders',
+    'rest_framework_swagger',
+    'bootstrapform',
+    'crispy_forms',
+    'longclaw.core2',
+    'longclaw.configuration',
+    'longclaw.shipping',
+    'longclaw.products',
+    'longclaw.orders',
+    'longclaw.checkout',
+    'longclaw.basket',
+    'longclaw.stats',
+    # "pinax.waitinglist",
+    # "bootstrapform",
+    # "pinax.templates",
+
+
+
+    'core',
+    'users',
+    'filters',
+    'webfuel',
+    'fuelcredit',
+    'googlegeo.apps.GoogleConfig', 
+    #'waitinglist',
+    #'cohorts',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+     'django.middleware.security.SecurityMiddleware',
+    'wagtail.contrib.legacy.sitemiddleware.SiteMiddleware',
+    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
 ]
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
 ROOT_URLCONF = 'app.urls'
+WAGTAIL_SITE_NAME = 'example.com'
+AUTH_USER_MODEL = 'core.User'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -62,6 +138,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'longclaw.configuration.context_processors.currency',
             ],
         },
     },
@@ -73,12 +150,47 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+if os.getenv("DATABASE_URL", "") != "":
+    r = urlparse(os.environ.get("DATABASE_URL"))
+    DATABASES = {
+        'default': {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": os.path.relpath(r.path, "/"),
+            "USER": r.username,
+            "PASSWORD": r.password,
+            "HOST": r.hostname,
+            "PORT": r.port,
+            "OPTIONS": {"sslmode": "require"},
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+
+
+
+        # 'default': {
+        #   'ENGINE': 'django.db.backends.postgresql',
+        #  'HOST': os.environ.get('DB_HOST'),
+        # 'HOST': 'app-f63cb26d-c373-4e6f-956b-1740b00989c2-do-user-6168075-0.b.db.ondigitalocean.com',
+        #  'NAME': os.environ.get('DB_NAME'),
+        # 'NAME': 'db',
+        # 'USER': os.environ.get('DB_USER'),
+        # 'USER': 'db',
+        # 'PASSWORD': os.environ.get('DB_PASS'),
+        # 'PASSWORD': 'cz3yfwnv97t8azjr',
+        # }
+
+        # host     : app-f63cb26d-c373-4e6f-956b-1740b00989c2-do-user-6168075-0.b.db.ondigitalocean.com
+        #port     : 25060
+        #username : db
+        #password : cz3yfwnv97t8azjr
+        #database : db
+        #sslmode  : require
+    }
 
 
 # Password validation
@@ -118,3 +230,164 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static")
+]
+
+MEDIA_ROOT = '/vol/web/media'
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+LOGIN_REDIRECT_URL = 'home'
+
+LOGOUT_REDIRECT_URL = 'home'
+
+SITE_ID = 1
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    )
+}
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+USER_DETAILS_SERIALIZER = 'core.serializers.user.UserSerializer'
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-disposition',
+    'content-type',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+
+PRODUCT_VARIANT_MODEL = 'webfuel.ProductVariant'
+PAYMENT_GATEWAY = 'longclaw.checkout.gateways.BasePayment'
+# Django-Allauth Config
+
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+ACCOUNT_LOGOUT_REDIRECT_URL = 'home'
+
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+)
+
+#SITE_ID = 1
+#ALGOLIA = {
+#    'APPLICATION_ID': 'YFK1XCRMK5',
+#    'API_KEY': '1a2d9493f2e22123cd6e9baf45334ef7'
+#}
+
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
+ACCOUNT_SESSION_REMEMBER = None
+SOCIALACCOUNT_QUERY_EMAIL = ACCOUNT_EMAIL_REQUIRED
+SOCIALACCOUNT_STORE_TOKENS = True
+
+SOCIALACCOUNT_PROVIDERS = {
+
+    'google': {
+                'SCOPE': [
+                    'profile',
+                    'email',
+                ],
+                'AUTH_PARAMS': {
+                    'access_type': 'online',
+                    }
+        }
+}
+SOCIALACCOUNT_PROVIDERS = {
+    'linkedin_oauth2': {
+                'SCOPE': [
+                    'r_fullprofile',
+                    'r_emailaddress',
+                    'w_member_social'
+                ],
+                'PROFILE_FIELDS': [
+                    'id',
+                    'first-name',
+                    'last-name',
+                    'email-address',
+                    'picture-url',
+                    'public-profile-url',
+                    #'birthDate',
+                    'address',
+                    'websites',
+                    'headline',
+                    'skills',
+                    'summary',
+                    'location',
+                    'industry',
+                    'positions',
+                    'company',
+                    'specialties',
+                ],
+                'LOCATION_FIELDS': [
+                    'location',
+                ],
+                'POSITION_FIELDS': [
+                    'company',
+                ]
+        }
+}
+SOCIALACCOUNT_PROVIDERS = {
+    'facebook': {
+                'METHOD': 'oauth2',
+                'SCOPE': ['email', 'public_profile', 'user_friends'],
+                'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+                'INIT_PARAMS': {'cookie': True},
+                'FIELDS': [
+                    'id',
+                    'email',
+                    'name',
+                    'first_name',
+                    'last_name',
+                    'verified',
+                    'locale',
+                    'timezone',
+                    'link',
+                    'gender',
+                    'updated_time',
+                ],
+                'EXCHANGE_TOKEN': True,
+                'LOCALE_FUNC': 'path.to.callable',
+                'VERIFIED_EMAIL': False,
+                'VERSION': 'v2.12',
+        }
+}
+
+ACCOUNT_FORMS = {
+#'signup': 'users.forms.SignupForm',
+#'signup': 'users.forms.CustomUserCreationForm',
+}
+
+ACCOUNT_ADAPTER = 'users.forms.drivers.CustomUserAccountAdapter'
+
+#ACCOUNT_SIGNUP_FORM_CLASS = 'users.forms.SignupForm'
